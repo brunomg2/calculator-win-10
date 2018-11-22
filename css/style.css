@@ -59,3 +59,12 @@ header {
 .selected {
     background-color: #909090;
 }
+
+#time ,
+#date {
+    float: right;
+    font-size: .7rem;
+    color: rgba(0, 0, 0, .4);
+    margin-right: 5px;
+
+}

@@ -1,1 +1,1 @@
-const calculator = new CalculatorController
+window.calculator = new CalculatorController
