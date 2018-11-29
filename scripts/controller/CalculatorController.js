@@ -10,14 +10,36 @@ class CalculatorController {
         this.initialize()
     }
 
+    copyToClipboard() {
+        let input = document.createElement('input')
+        input.value = this.displayCalc
+
+        document.body.appendChild(input)
+        input.select()
+        
+        document.execCommand('Copy')
+        input.remove()
+    }
+
+    pasteFromClipboard() {
+        document.addEventListener('paste', event => {
+            let text = event.clipboardData.getData('text')
+            this.setPushOperation(text);
+            this.displayCalc = parseFloat(text)
+        })
+    }
+
     initialize() {
         this.setDisplayDateTime()
         this.initButtonsEvents()
+
         setInterval(() => {
             this.setDisplayDateTime()
         }, 1000)
 
         this.setLastNumberToDisplay()
+        this.initKeyboard()
+        this.pasteFromClipboard()
     }
 
     clearAll() {
@@ -31,6 +53,7 @@ class CalculatorController {
         this._operation.pop()
         this.setLastNumberToDisplay()
     }
+
     isOperator(value) {
         return (['+', '-', 'x', '÷', '/', '*', '%'].indexOf(value) > -1)
     }
@@ -51,11 +74,63 @@ class CalculatorController {
         }
     }
 
-
+    initKeyboard() {
+        document.addEventListener('keyup', event => {
+            switch (event.key) {
+                case 'Escape':
+                    this.clearAll()
+                    break
+                case 'Backspace':
+                    this.clearEntry()
+                    break
+                case 'x':
+                case '*':
+                    this.addOperation('*')
+                    break
+                case '÷':
+                case '/':
+                    this.addOperation('/')
+                    break
+                case '+':
+                    this.addOperation('+')
+                    break
+                case '-':
+                    this.addOperation('-')
+                    break
+                case '%':
+                    this.addOperation('%')
+                    break
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    this.addOperation(parseInt(event.key))
+                    break
+                case ',':
+                case '.':
+                    this.addDot()
+                    break
+                case '=':
+                case 'Enter':
+                    this.calc()
+                    break
+                case 'c':
+                    if(event.ctrlKey) this.copyToClipboard()
+                    break
+            }
+        })
+    }
 
     getResult() {
         return eval(this._operation.join(""))
     }
+
 
     calc() {
         let last = ''
@@ -98,17 +173,20 @@ class CalculatorController {
             }
         }
 
-        if(!lastItem) {
+        if(!lastItem && lastItem !== 0) {
 
             lastItem = (!isOperator) ? this._lastNumber : this._lastOperator
         }
+        
         return lastItem
     }
 
     setLastNumberToDisplay() {
         let lastNumber = this.getLastItem(false)
 
-        if (!lastNumber) lastNumber = 0
+        if (!lastNumber) {
+            lastNumber = 0
+        } 
 
         this.displayCalc = lastNumber
     }
@@ -166,16 +244,13 @@ class CalculatorController {
             case 'C':
                 this.clearAll()
                 break
-
             case 'CE':
                 this.clearEntry()
                 break
             case 'x':
-            case '*':
                 this.addOperation('*')
                 break
             case '÷':
-            case '/':
                 this.addOperation('/')
                 break
             case '+':
@@ -195,7 +270,6 @@ class CalculatorController {
             case '9':
                 this.addOperation(parseInt(value))
                 break
-            case '.':
             case ',':
                 this.addDot()
                 break
