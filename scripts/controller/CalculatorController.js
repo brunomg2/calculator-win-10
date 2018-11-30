@@ -1,5 +1,7 @@
 class CalculatorController {
     constructor() {
+        this._audio = new Audio('click.mp3')
+        this._audioOnOf = false
         this._lastOperator = ''
         this._lastNumber = ''
         this._operation = []
@@ -16,7 +18,7 @@ class CalculatorController {
 
         document.body.appendChild(input)
         input.select()
-        
+
         document.execCommand('Copy')
         input.remove()
     }
@@ -40,8 +42,23 @@ class CalculatorController {
         this.setLastNumberToDisplay()
         this.initKeyboard()
         this.pasteFromClipboard()
+
+        const audio = document.querySelector('.btn-audio')
+        audio.onclick = (() => {
+            this.toggleAudio()
+        })
     }
 
+    toggleAudio() {
+        this._audioOnOf = !this._audioOnOf
+    }
+
+    playAudio() {
+        if (this._audioOnOf) {
+            this._audio.currentTime = 0
+            this._audio.play()
+        }
+    }
     clearAll() {
         this._operation = []
         this._lastNumber = ''
@@ -75,7 +92,10 @@ class CalculatorController {
     }
 
     initKeyboard() {
+
         document.addEventListener('keyup', event => {
+            this.playAudio()
+
             switch (event.key) {
                 case 'Escape':
                     this.clearAll()
@@ -116,27 +136,34 @@ class CalculatorController {
                 case '.':
                     this.addDot()
                     break
-                case '=':
                 case 'Enter':
+                case '=':
                     this.calc()
                     break
                 case 'c':
-                    if(event.ctrlKey) this.copyToClipboard()
+                    if (event.ctrlKey) this.copyToClipboard()
+                    break
+                default:
                     break
             }
         })
     }
 
     getResult() {
-        return eval(this._operation.join(""))
+        try {
+            return eval(this._operation.join(""))
+        } catch (error) {
+            setTimeout(() => {
+                this.setError()
+            }, 1)
+        }
     }
-
 
     calc() {
         let last = ''
         this._lastOperator = this.getLastItem()
 
-        if(this._operation.length < 3) {
+        if (this._operation.length < 3) {
             let firstItem = this._operation[0]
             this._operation = [firstItem, this._lastOperator, this._lastNumber]
         }
@@ -144,11 +171,11 @@ class CalculatorController {
         if (this._operation.length > 3) {
             let last = this._operation.pop()
             this._lastNumber = this.getResult()
-        
-        }else if(this._operation.length == 3) {
+
+        } else if (this._operation.length == 3) {
             this._lastNumber = this.getLastItem(false)
         }
-        
+
         let result = this.getResult()
 
         if (last == '%') {
@@ -166,18 +193,18 @@ class CalculatorController {
         let lastItem
 
         for (let i = this._operation.length - 1; i >= 0; i--) {
-            
+
             if (this.isOperator(this._operation[i]) === isOperator) {
                 lastItem = this._operation[i]
                 break
             }
         }
 
-        if(!lastItem && lastItem !== 0) {
+        if (!lastItem && lastItem !== 0) {
 
             lastItem = (!isOperator) ? this._lastNumber : this._lastOperator
         }
-        
+
         return lastItem
     }
 
@@ -186,7 +213,7 @@ class CalculatorController {
 
         if (!lastNumber) {
             lastNumber = 0
-        } 
+        }
 
         this.displayCalc = lastNumber
     }
@@ -228,18 +255,20 @@ class CalculatorController {
 
     addDot() {
         const lastOperation = this.getLastOperation()
-        if(lastOperation.toString().split('').indexOf('.') > -1) return
+        if (lastOperation.toString().split('').indexOf('.') > -1) return
 
-        if(this.isOperator(lastOperation) || lastOperation == undefined) {
+        if (this.isOperator(lastOperation) || lastOperation == undefined) {
             this.setPushOperation('0.')
-        }else {
+        } else {
             this.setLastOperation(lastOperation.toString() + '.')
         }
-        
+
         this.setLastNumberToDisplay()
     }
 
     executeButton(value) {
+        this.playAudio()
+
         switch (value) {
             case 'C':
                 this.clearAll()
@@ -275,9 +304,6 @@ class CalculatorController {
                 break
             case '=':
                 this.calc()
-                break
-            default:
-                this.setError()
                 break
         }
     }
@@ -322,6 +348,11 @@ class CalculatorController {
     }
 
     set displayCalc(value) {
+
+        if (value.toString().length > 10) {
+            this.setError()
+            return false
+        }
         this._displayCalcEl.innerHTML = value
     }
 
